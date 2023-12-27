@@ -1,11 +1,16 @@
 const BlockType = require('../../extension-support/block-type');
 const ArgumentType = require('../../extension-support/argument-type');
-const TargetType = require('../../extension-support/target-type');
+// const TargetType = require('../../extension-support/target-type');
 
 class Scratch3YourExtension {
 
     constructor (runtime) {
         // put any setup for your extension here
+        // new one 
+        import('syllable') 
+            .then((syllableModule) => { 
+                this.syllable = syllableModule.syllable; 
+            });
     }
 
     /**
@@ -24,8 +29,8 @@ class Scratch3YourExtension {
             color2: '#660066',
 
             // icons to display
-            blockIconURI: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAFCAAAAACyOJm3AAAAFklEQVQYV2P4DwMMEMgAI/+DEUIMBgAEWB7i7uidhAAAAABJRU5ErkJggg==',
-            menuIconURI: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAFCAAAAACyOJm3AAAAFklEQVQYV2P4DwMMEMgAI/+DEUIMBgAEWB7i7uidhAAAAABJRU5ErkJggg==',
+            // blockIconURI: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAFCAAAAACyOJm3AAAAFklEQVQYV2P4DwMMEMgAI/+DEUIMBgAEWB7i7uidhAAAAABJRU5ErkJggg==',
+            // menuIconURI: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAFCAAAAACyOJm3AAAAFklEQVQYV2P4DwMMEMgAI/+DEUIMBgAEWB7i7uidhAAAAABJRU5ErkJggg==',
 
             // your Scratch blocks
             blocks: [
@@ -41,22 +46,15 @@ class Scratch3YourExtension {
                     blockType: BlockType.REPORTER,
 
                     // label to display on the block
-                    text: 'My first block [MY_NUMBER] and [MY_STRING]',
+                    text: 'Title for ISBN book [BOOK_NUMBER]',
 
                     // true if this block should end a stack
                     terminal: false,
-
-                    // where this block should be available for code - choose from:
-                    //   TargetType.SPRITE - for code in sprites
-                    //   TargetType.STAGE  - for code on the stage / backdrop
-                    // remove one of these if this block doesn't apply to both
-                    filter: [ TargetType.SPRITE, TargetType.STAGE ],
-
                     // arguments used in the block
                     arguments: {
-                        MY_NUMBER: {
+                        BOOK_NUMBER: {
                             // default value before the user sets something
-                            defaultValue: 123,
+                            defaultValue: 1718500564,
 
                             // type/shape of the parameter - choose from:
                             //     ArgumentType.ANGLE - numeric value with an angle picker
@@ -67,18 +65,28 @@ class Scratch3YourExtension {
                             //     ArgumentType.NOTE - midi music value with a piano picker
                             type: ArgumentType.NUMBER
                         },
-                        MY_STRING: {
-                            // default value before the user sets something
-                            defaultValue: 'hello',
+                        // MY_STRING: {
+                        //     // default value before the user sets something
+                        //     defaultValue: 'hello',
 
-                            // type/shape of the parameter - choose from:
-                            //     ArgumentType.ANGLE - numeric value with an angle picker
-                            //     ArgumentType.BOOLEAN - true/false value
-                            //     ArgumentType.COLOR - numeric value with a colour picker
-                            //     ArgumentType.NUMBER - numeric value
-                            //     ArgumentType.STRING - text value
-                            //     ArgumentType.NOTE - midi music value with a piano picker
-                            type: ArgumentType.STRING
+                        //     // type/shape of the parameter - choose from:
+                        //     //     ArgumentType.ANGLE - numeric value with an angle picker
+                        //     //     ArgumentType.BOOLEAN - true/false value
+                        //     //     ArgumentType.COLOR - numeric value with a colour picker
+                        //     //     ArgumentType.NUMBER - numeric value
+                        //     //     ArgumentType.STRING - text value
+                        //     //     ArgumentType.NOTE - midi music value with a piano picker
+                        //     type: ArgumentType.STRING
+                        // }
+                        opcode: 'mySecondBlock',
+                        blockType: BlockType.REPORTER,
+                        text: 'Syllables in [MY_TEXT]',
+                        terminal: false,
+                        arguments: {
+                            MY_TEXT: {
+                                defaultValue: 'Hello World',
+                                type: ArgumentType.STRING
+                            }
                         }
                     }
                 }
@@ -91,10 +99,27 @@ class Scratch3YourExtension {
      * implementation of the block with the opcode that matches this name
      *  this will be called when the block is used
      */
-    myFirstBlock ({ MY_NUMBER, MY_STRING }) {
+    myFirstBlock ({BOOK_NUMBER}) {
         // example implementation to return a string
-        return MY_STRING + ' : doubled would be ' + (MY_NUMBER * 2);
+        return fetch('https://openlibrary.org/isbn/'+ BOOK_NUMBER + '.json')
+            .then((response)=>{
+                if (response.ok){
+                    return response.json();
+                }
+                else{
+                    return {title:'Unknown'};
+                }   
+            })
+            .then((bookinfo)=>{
+                return bookinfo.title;
+            });
     }
+
+    mySecondBlock ({ MY_TEXT }) {
+        // example implementation to return a string
+        return this.syllable(MY_TEXT);
+    }
+
 }
 
 module.exports = Scratch3YourExtension;
